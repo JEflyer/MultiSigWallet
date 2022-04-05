@@ -42,6 +42,8 @@ contract MultiSig is IERC721Receiver {
     //keep a list of tokens owned by this contract for a given collection
     mapping(address => uint16[]) private tokens;
 
+    uint8 minSignature;
+
     constructor(
         address[] memory addressesToAdd
     ){
@@ -50,6 +52,7 @@ contract MultiSig is IERC721Receiver {
         for(uint8 i=0; i< addressesToAdd.length; i++){  
             approvedWallets[addressesToAdd[i]] = true;
         }
+        minSignature = uint8(addressesToAdd.length -1);
     }
 
     modifier onlyAdmin {
@@ -76,7 +79,7 @@ contract MultiSig is IERC721Receiver {
     function proposeTransaction(address execAdd, address collection, uint256 value) external onlyApproved {
         require(address(this).balance >= value);
         transactionCount +=1;
-        information[transactionCount].execAdd = exacAdd;
+        information[transactionCount].execAdd = execAdd;
         information[transactionCount].proposedPrice = value;
         information[transactionCount].proposedBy = msg.sender;
         information[transactionCount].signedBy[msg.sender] = true;
@@ -99,14 +102,11 @@ contract MultiSig is IERC721Receiver {
 
         //if enough signs have been gathered execute transaction
         if(information[transactionId].signCount == minSignature){
-            //saves tokenId minted
-            uint16 token = ITransaction(information[transactionId].execAdd).transact(information[transactionId].collection);
+            ITransaction(information[transactionId].execAdd).transact(information[transactionId].collection);
             
             information[transactionId].active = false;
             information[transactionId].transacted = true;
             
-            //add token to the mapping of owned NFTs
-            tokens[information[transactionId].collection].push(token);
         }
     }
 
@@ -124,8 +124,17 @@ contract MultiSig is IERC721Receiver {
     }
 
     //get tx info
-    function getTxInfo(uint32 transactionId) external view returns(Data memory){
-        return information[transactionId];
+    function getTxInfo(uint32 transactionId) external view returns(
+        address,
+        address,
+        address,
+        uint256,
+        uint8,
+        bool,
+        bool
+    ){
+        Data storage data = information[transactionId]; 
+        return (data.execAdd, data.collection, data.proposedBy, data.proposedPrice, data.signCount, data.active, data.transacted);
     }
 
     //Send first NFT registered on the contract
