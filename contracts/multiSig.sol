@@ -150,7 +150,8 @@ contract MultiSig is IERC721Receiver {
         uint256 tokenId,
         bytes calldata data
     ) public virtual override returns (bytes4) {
-        tokens[operator].push(tokenId);
+        uint16[] storage arr = tokens[operator];
+        arr[arr.length] = uint16(tokenId);
         return this.onERC721Received.selector;
     }
 }
