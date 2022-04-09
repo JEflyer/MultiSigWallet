@@ -56,12 +56,12 @@ contract MultiSig is IERC721Receiver {
     }
 
     modifier onlyAdmin {
-        require(msg.sender == admin);
+        require(msg.sender == admin, "OA");
         _;
     }
 
     modifier onlyApproved{
-        require(approvedWallets[msg.sender] == true);
+        require(approvedWallets[msg.sender] == true,"OAp");
         _;
     }
 
